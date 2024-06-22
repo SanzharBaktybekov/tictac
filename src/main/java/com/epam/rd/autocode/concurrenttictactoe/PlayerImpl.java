@@ -5,6 +5,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.epam.rd.autocode.concurrenttictactoe.Main.tableString;
+
 public class PlayerImpl implements Player {
     private static final Lock lock = new ReentrantLock();
     private static final Condition condition = lock.newCondition();
@@ -56,7 +58,7 @@ public class PlayerImpl implements Player {
 
     @Override
     public void run() {
-        while (!gameOver.get()) {
+        while (!gameIsOver(ticTacToe)) {
             lock.lock();
             try {
                 while (mark == ticTacToe.lastMark() && !gameOver.get()) {
@@ -71,7 +73,6 @@ public class PlayerImpl implements Player {
                     condition.signalAll();
                 } else {
                     ticTacToe.setMark(move.row, move.column, mark);
-                    System.out.println(Thread.currentThread().getName() + " - Player " + mark + " makes move at (" + move.row + ", " + move.column + ")");
                     if (gameIsOver(ticTacToe)) {
                         gameOver.set(true);
                         System.out.println("Game over! Player " + mark + " wins!");

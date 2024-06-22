@@ -26,4 +26,5 @@ public interface TicTacToe {
     static TicTacToe buildGame() {
         return new TicTacToeImpl();
     }
+
 }
