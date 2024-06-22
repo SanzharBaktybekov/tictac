@@ -1,22 +1,17 @@
 package com.epam.rd.autocode.concurrenttictactoe;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.epam.rd.autocode.concurrenttictactoe.Main.tableString;
-
 public class PlayerImpl implements Player {
     private static final Lock lock = new ReentrantLock();
     private static final Condition condition = lock.newCondition();
-    private static int currentPlayerIndex = 0;
     private static int playerCounter = 0;
     private final int playerIndex;
     private final TicTacToe ticTacToe;
     private final char mark;
     private final PlayerStrategy playerStrategy;
-    private static final AtomicBoolean gameOver = new AtomicBoolean(false);
 
     public PlayerImpl(TicTacToe ticTacToe, char mark, PlayerStrategy playerStrategy) {
         this.ticTacToe = ticTacToe;
@@ -55,35 +50,37 @@ public class PlayerImpl implements Player {
         return true;
     }
 
-
     @Override
     public void run() {
         while (!gameIsOver(ticTacToe)) {
             lock.lock();
             try {
-                while (mark == ticTacToe.lastMark() && !gameOver.get()) {
+                while (mark == ticTacToe.lastMark() && !gameIsOver(ticTacToe)) {
                     condition.await();
                 }
-                if (gameOver.get()) {
+                if (gameIsOver(ticTacToe)) {
                     return;
                 }
                 Move move = playerStrategy.computeMove(mark, ticTacToe);
-                if (move == null) {
-                    gameOver.set(true);
-                    condition.signalAll();
-                } else {
+                if (move != null) {
                     ticTacToe.setMark(move.row, move.column, mark);
-                    if (gameIsOver(ticTacToe)) {
-                        gameOver.set(true);
-                        System.out.println("Game over! Player " + mark + " wins!");
-                    }
-                    condition.signalAll();
+                    System.out.println(Thread.currentThread().getName() + " - Player " + mark + " makes move at (" + move.row + ", " + move.column + ")");
                 }
+                condition.signalAll();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } finally {
                 lock.unlock();
             }
+        }
+        if (gameIsOver(ticTacToe)) {
+            lock.lock();
+            try {
+                condition.signalAll();
+            } finally {
+                lock.unlock();
+            }
+            System.out.println("Game over! Player " + mark + " wins!");
         }
     }
 }
