@@ -6,7 +6,7 @@ public class TicTacToeImpl implements TicTacToe {
             {' ',' ',' '},
             {' ',' ',' '},
     };
-    private char lastMark;
+    private char lastMark = ' ';
     @Override
     public void setMark(int x, int y, char mark) {
         if(table[x][y] == ' ') {
